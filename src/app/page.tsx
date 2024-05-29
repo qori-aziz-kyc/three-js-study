@@ -1,95 +1,104 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client'
+import * as THREE from "three";
+import { useEffect } from "react";
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { TransformControls } from 'three/addons/controls/TransformControls.js';
 
 export default function Home() {
+  let canvas: HTMLElement
+  useEffect(() => {
+    if (canvas) return
+    canvas = document.getElementById('canvas')!
+    const scene = new THREE.Scene()
+    const sizes = {
+      width: innerWidth,
+      height: innerHeight
+    }
+
+    const camera = new THREE.PerspectiveCamera(
+      75,
+      sizes.width / sizes.height,
+      0.1,
+      5000
+    )
+
+    camera.position.set( 3, 2, 8 );
+    
+
+    const renderer = new THREE.WebGLRenderer({
+      canvas: canvas || undefined,
+      antialias: true,
+      alpha: true
+    })
+    renderer.setSize(sizes.width, sizes.height)
+    renderer.setPixelRatio(window.devicePixelRatio)
+
+    const controls = new OrbitControls( camera, renderer.domElement );
+    controls.target.set( 0, 0, 0.5 );
+    controls.update();
+    controls.enablePan = false;
+    controls.enableDamping = true;
+
+    // ボックスジオメトリー
+    const boxGeometry = new THREE.BoxGeometry(1, 1, 1)
+    const boxMaterial = new THREE.MeshLambertMaterial({
+      color: '#ffffff'
+    })
+    const box = new THREE.Mesh(boxGeometry, boxMaterial)
+    box.position.z = -10
+    box.rotation.set(20, 20, 20)
+    scene.add(box)
+
+    const sphereGeometry = new THREE.SphereGeometry( 1, 32, 32 );
+    const sphereMaterial = new THREE.MeshLambertMaterial({
+      color: '#23ffff'
+    })
+
+    const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial)
+
+    sphere.position.z = -5
+    // sphere.position.y = 1
+    // sphere.rotation.set(20, 20, 20)
+    scene.add(sphere)
+
+    // ライト
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0)
+    scene.add(ambientLight)
+    const pointLight = new THREE.PointLight(0xffffff, 4,100,0.5)
+    pointLight.position.set(1, 2, 3)
+    scene.add(pointLight)
+
+    // アニメーション
+    const clock = new THREE.Clock()
+    const tick = () => {
+      const elapsedTime = clock.getElapsedTime()
+      box.rotation.x = elapsedTime
+      box.rotation.y = elapsedTime
+      box.rotation.z = elapsedTime
+      // box.position.z =  box.position.z + 0.1
+      sphere.rotation.x = elapsedTime
+      controls.update();
+      window.requestAnimationFrame(tick)
+      renderer.render(scene, camera)
+    }
+    tick()
+
+    // ブラウザのリサイズ処理
+    window.addEventListener('resize', () => {
+      sizes.width = window.innerWidth
+      sizes.height = window.innerHeight
+      camera.aspect = sizes.width / sizes.height
+      camera.updateProjectionMatrix()
+      renderer.setSize(sizes.width, sizes.height)
+      renderer.setPixelRatio(window.devicePixelRatio)
+    })
+
+
+
+  }, [])
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+    <>
+    <canvas id="canvas"></canvas>
+    </>
   );
 }
